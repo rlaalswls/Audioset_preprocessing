@@ -6,15 +6,21 @@
 ## Required Dependencies
 
 **Install yt-dlp**
-```pip install -U yt-dlp```
+```
+pip install -U yt-dlp
+```
+
 **Install ffmpeg**
 ```
 Windows: https://ffmpeg.org/download.html#build-windows
 macOS: brew install ffmpeg
 Linux: sudo apt-get install ffmpeg
 ```
+
 **Install Python libraries**
-```pip install pandas tqdm numpy soundfile scipy```
+```
+pip install pandas tqdm numpy soundfile scipy
+```
 
 ## Instruction
 
