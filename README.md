@@ -1,20 +1,21 @@
 # Audioset_preprocessing
 
-[AudioSet](https://research.google.com/audioset/)의 메타데이터를 기반으로 YouTube에서 오디오만 다운로드하고, 세그먼트를 추출하며, `.wav` 형식으로 변환 및 전처리하는 파이프라인 스크립트입니다.
+[AudioSet](https://research.google.com/audioset/)의 데이터를 사용했습니다.
+yt-dlp로 YouTube에서 오디오를 다운로드하고, 세그먼트를 추출하며, ffmpeg로 `.wav` 변환 및 전처리하는 파이프라인 스크립트입니다.
 
 ---
 
-## 스크립트 구성
+## Instruction
 
 ### 1. `extractor.py`
 
 - AudioSet의 라벨에 해당하는 YouTube 오디오를 다운로드하고, 지정된 세그먼트를 잘라 `.wav`로 저장합니다.
-- `class_labels_indices.csv`, `eval_segments.csv`, `unbalanced_train_segments.csv`를 사용합니다.
+- --label 인자에는 AudioSet의 'display_name' 값을 사용합니다. 공백은 밑줄(_)로 대체하며, 큰 따옴표(" ")로 감싸야 합니다.
 
 **How to use:**
 
 ```bash
-python extractor.py --label Explosion --num_sample 10
+python extractor.py --label "Fire_alarm" --num_sample 10
 ```
 
 ### 2. `duration.py`
@@ -50,18 +51,21 @@ python resampling.py --folder audioset/Explosion
 ```
 
 ### Sturcture
-audioset/
-  ├── Fire_alarm/
-  │   ├── Fire_alarm_0.wav
-  │   ├── Fire_alarm_1.wav
-  │   └── ...
-  ├── Explosion/
-  │   ├── Explosio_0.wav
-  │   └── ...
-class_labels_indices.csv
-eval_segments.csv
-unbalanced_train_segments.csv
-extractor.py
-duration.py
-spec.py
-resampling.py
+
+├── audioset/              
+│   └── Dog_bark/
+│       ├── Fire_alarm_0.wav
+│       ├── Fire_alarm_1.wav
+│       └── ...
+│   └── Explosion/
+│       ├── Explosion_0.wav
+│       └── ...
+├── class_labels_indices.csv
+├── eval_segments.csv
+├── unbalanced_train_segments.csv
+├── extractor.py
+├── duration.py
+├── spec.py
+├── resampling.py
+├── requirements.txt
+└── README.md                       
