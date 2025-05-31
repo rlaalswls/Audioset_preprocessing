@@ -3,7 +3,18 @@
 [AudioSet](https://research.google.com/audioset/)의 데이터를 기반으로,
 `yt-dlp`를 사용하여 YouTube에서 오디오를 다운로드하고, 세그먼트를 추출한 뒤, `ffmpeg`로 .wav 형식 변환 및 전처리하는 파이프라인 스크립트입니다.
 
----
+## Required Dependencies
+
+**Install yt-dlp**
+```pip install -U yt-dlp```
+**Install ffmpeg**
+```
+Windows: https://ffmpeg.org/download.html#build-windows
+macOS: brew install ffmpeg
+Linux: sudo apt-get install ffmpeg
+```
+**Install Python libraries**
+```pip install pandas tqdm numpy soundfile scipy```
 
 ## Instruction
 
@@ -51,7 +62,7 @@ python resampling.py --folder audioset/Explosion
 ```
 
 ### Sturcture
-
+```
 ├── audioset/              
 │   └── Dog_bark/
 │       ├── Fire_alarm_0.wav
@@ -69,3 +80,4 @@ python resampling.py --folder audioset/Explosion
 ├── resampling.py
 ├── requirements.txt
 └── README.md                       
+```
