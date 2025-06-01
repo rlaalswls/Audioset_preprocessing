@@ -24,8 +24,8 @@ def download_audio(youtube_url: str, temp_audio_path: str):
     except subprocess.CalledProcessError:
         return False
 
-#ffmpeg로 wav 변환
-def convert_to_wav(temp_audio_path: str, output_path: str) :
+# ffmpeg로 wav 변환
+def convert_to_wav(temp_audio_path: str, output_path: str):
     try:
         subprocess.run([
             "ffmpeg", "-y",
@@ -34,19 +34,28 @@ def convert_to_wav(temp_audio_path: str, output_path: str) :
             "-ar", "48000",
             "-ac", "1",
             output_path
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) #출력 로그 숨김
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # 출력 로그 숨김
         os.remove(temp_audio_path)
         return True
     except subprocess.CalledProcessError:
         return False
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--label", type=str, required=True)
-    parser.add_argument("--num_sample", type=int, default=10)
-    return parser.parse_args()
+    parser.add_argument("--num_sample", type=str, required=True,
+                        help='number of samples to download or "all" for unlimited')
+    args = parser.parse_args()
 
+    if args.num_sample.lower() == "all":
+        args.num_sample = None
+    else:
+        try:
+            args.num_sample = int(args.num_sample)
+        except ValueError:
+            parser.error("--num_sample must be an integer or 'all'")
+
+    return args
 
 def main():
     args = parse_args()
@@ -54,7 +63,6 @@ def main():
     num_sample = args.num_sample
     temp_audio_path = "temp_audio.m4a"
     csv_files = ["eval_segments.csv", "unbalanced_train_segments.csv"]
-    os.makedirs("./downloads", exist_ok=True)
 
     parsed_rows = []
     for file in csv_files:
@@ -87,15 +95,18 @@ def main():
                     })
 
     if not parsed_rows:
+        print(f"No segments found for label '{target_label}'.")
         return
 
-    final_df = pd.DataFrame(parsed_rows[:num_sample * 2])  # 실패 대비 여유 확보
+    final_df = pd.DataFrame(parsed_rows)
+    if num_sample is not None:
+        final_df = final_df[:num_sample * 2]  # 실패 대비 여유분 확보
 
     os.makedirs(f"audioset/{target_label}", exist_ok=True)
 
     success_count = 0
     for _, row in tqdm(final_df.iterrows(), total=len(final_df), desc=f"Downloading: "):
-        if success_count >= num_sample:
+        if num_sample is not None and success_count >= num_sample:
             break
 
         ytid = row["YTID"]
@@ -105,6 +116,7 @@ def main():
         url = f"https://www.youtube.com/watch?v={ytid}"
         output_path = f"audioset/{target_label}/{target_label}_{success_count}.wav"
         temp_full_wav = "temp_full.wav"
+
         # 오디오 다운로드 및 WAV 저장
         if not download_audio(url, temp_audio_path):
             continue
