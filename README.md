@@ -1,7 +1,7 @@
 # Audioset_preprocessing
 
 [AudioSet](https://research.google.com/audioset/)의 데이터를 기반으로,
-`yt-dlp`를 사용하여 YouTube에서 오디오를 다운로드하고, 세그먼트를 추출한 뒤, `ffmpeg`로 .wav 형식 변환 및 전처리하는 파이프라인 스크립트입니다.
+`yt-dlp`를 사용하여 YouTube에서 오디오를 다운로드하고, 세그먼트를 추출한 뒤, `ffmpeg`로 .wav 형식 변환 및 전처리합니다.
 
 ## Required Dependencies
 
@@ -59,12 +59,12 @@ python spec.py --folder audioset --txt output_info.txt
 ### 4. resampling.py
 
 - 오디오 파일의 FFT 주파수 분석을 통해 주요 주파수 대역을 확인하고, 최적의 샘플레이트로 리샘플링합니다.
-- 결과 파일은 _resampled.wav 확장자로 저장됩니다.
+- 결과 파일은 _resampled.wav로 저장됩니다.
 
 **How to use:**
 
 ```bash
-python resampling.py --folder audioset/Explosion
+python resampling.py --folder audioset/Explosion --num_sample all
 ```
 
 ### Sturcture
