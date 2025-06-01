@@ -1,5 +1,6 @@
 import os
 import argparse
+import sys
 import numpy as np
 import soundfile as sf
 from scipy.signal import resample
@@ -38,14 +39,28 @@ def resample_audio(input_path, output_path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--folder", type=str, required=True)
+    parser.add_argument("--num_sample", type=str, default="all",
+                        help='number of samples to process or "all" (default)')
     args = parser.parse_args()
 
-    for fname in sorted(os.listdir(args.folder)):
-        if fname.endswith(".wav") and not fname.endswith("_resampled.wav"):
-            input_path = os.path.join(args.folder, fname)
-            name, ext = os.path.splitext(fname)
-            output_path = os.path.join(args.folder, f"{name}_resampled.wav")
-            resample_audio(input_path, output_path)
+    if args.num_sample.lower() == "all":
+        num_sample = None
+    else:
+        try:
+            num_sample = int(args.num_sample)
+        except ValueError:
+            sys.exit(1)
+
+    wav_files = sorted([f for f in os.listdir(args.folder) if f.endswith(".wav") and not f.endswith("_resampled.wav")])
+
+    if num_sample is not None:
+        wav_files = wav_files[:num_sample]
+
+    for fname in wav_files:
+        input_path = os.path.join(args.folder, fname)
+        name, ext = os.path.splitext(fname)
+        output_path = os.path.join(args.folder, f"{name}_resampled.wav")
+        resample_audio(input_path, output_path)
 
 
 if __name__ == "__main__":
