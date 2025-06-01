@@ -70,7 +70,7 @@ python resampling.py --folder audioset/Explosion --num_sample all
 ### Sturcture
 ```
 ├── audioset/              
-│   └── Dog_bark/
+│   └── Fire_alarm/
 │       ├── Fire_alarm_0.wav
 │       ├── Fire_alarm_1.wav
 │       └── ...
