@@ -4,14 +4,11 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 
-def slugify_spaces(name):
-    return name.replace(" ", "_")
+def slugify(name):
+    # class_labels_indices.csv의 display_name은 공백 있음.
+    # 사용자 입력에서 "_"와 " " 구분 없이 받으려면 이렇게 처리 가능
+    return name.strip().lower().replace("_", " ")
 
-# 라벨 매핑
-df = pd.read_csv("class_labels_indices.csv")
-label_map = dict(zip(df["mid"], df["display_name"].apply(slugify_spaces)))
-
-# yt-dlp로 오디오 다운로드 
 def download_audio(youtube_url: str, temp_audio_path: str):
     try:
         subprocess.run([
@@ -24,7 +21,6 @@ def download_audio(youtube_url: str, temp_audio_path: str):
     except subprocess.CalledProcessError:
         return False
 
-# ffmpeg로 wav 변환
 def convert_to_wav(temp_audio_path: str, output_path: str):
     try:
         subprocess.run([
@@ -34,7 +30,7 @@ def convert_to_wav(temp_audio_path: str, output_path: str):
             "-ar", "48000",
             "-ac", "1",
             output_path
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # 출력 로그 숨김
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         os.remove(temp_audio_path)
         return True
     except subprocess.CalledProcessError:
@@ -43,8 +39,7 @@ def convert_to_wav(temp_audio_path: str, output_path: str):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--label", type=str, required=True)
-    parser.add_argument("--num_sample", type=str, required=True,
-                        help='number of samples to download or "all" for unlimited')
+    parser.add_argument("--num_sample", type=str, required=True)
     args = parser.parse_args()
 
     if args.num_sample.lower() == "all":
@@ -59,53 +54,74 @@ def parse_args():
 
 def main():
     args = parse_args()
-    target_label = args.label
+    input_label_name = slugify(args.label)  # 입력받은 라벨명 공백과 _ 처리
     num_sample = args.num_sample
     temp_audio_path = "temp_audio.m4a"
-    csv_files = ["eval_segments.csv", "unbalanced_train_segments.csv"]
+    data_file = "./audioset/data.txt"
+    label_csv = "./class_labels_indices.csv"
 
-    parsed_rows = []
-    for file in csv_files:
-        if not os.path.exists(file):
-            continue
-        with open(file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                parts = line.split(",", 3)
-                if len(parts) != 4:
-                    continue
-
-                video_id = parts[0].strip()
-                try:
-                    start = float(parts[1].strip())
-                    end = float(parts[2].strip())
-                except ValueError:
-                    continue
-
-                label_list = parts[3].strip().strip('"').split()
-                matched = [label_map[l] for l in label_list if l in label_map]
-                if target_label in matched:
-                    parsed_rows.append({
-                        "YTID": video_id,
-                        "start_seconds": start,
-                        "end_seconds": end,
-                        "label": target_label
-                    })
-
-    if not parsed_rows:
-        print(f"No segments found for label '{target_label}'.")
+    # class_labels_indices.csv 읽기
+    if not os.path.exists(label_csv):
+        print(f"Label CSV file not found: {label_csv}")
         return
 
-    final_df = pd.DataFrame(parsed_rows)
-    if num_sample is not None:
-        final_df = final_df[:num_sample * 2]  # 실패 대비 여유분 확보
+    df_labels = pd.read_csv(label_csv)
+    # display_name도 slugify 해서 매핑 준비 (key: slugify(display_name), value: mid)
+    labelname_to_mid = {slugify(name): mid for mid, name in zip(df_labels["mid"], df_labels["display_name"])}
 
-    os.makedirs(f"audioset/{target_label}", exist_ok=True)
+    if input_label_name not in labelname_to_mid:
+        print(f"Label '{args.label}' not found in label list.")
+        print("Available labels include:")
+        for k in list(labelname_to_mid.keys())[:20]:
+            print(f"  - {k}")
+        return
+
+    target_label_id = labelname_to_mid[input_label_name]
+
+    parsed_rows = []
+    if not os.path.exists(data_file):
+        print(f"Data file not found: {data_file}")
+        return
+
+    with open(data_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split(",", 3)
+            if len(parts) != 4:
+                continue
+
+            video_id = parts[0].strip()
+            try:
+                start = float(parts[1].strip())
+                end = float(parts[2].strip())
+            except ValueError:
+                continue
+
+            label_ids_str = parts[3].strip().strip('"')
+            label_ids = [l.strip() for l in label_ids_str.split(",")]
+
+            if target_label_id in label_ids:
+                parsed_rows.append({
+                    "YTID": video_id,
+                    "start_seconds": start,
+                    "end_seconds": end,
+                    "label_id": target_label_id
+                })
+
+    if not parsed_rows:
+        print(f"No segments found for label '{args.label}' ({target_label_id}).")
+        return
+
+    # 여유분 확보 (2배)
+    final_rows = parsed_rows if num_sample is None else parsed_rows[:num_sample * 2]
+
+    safe_label_folder = target_label_id.lstrip("/").replace("/", "_")
+    os.makedirs(f"audioset/{safe_label_folder}", exist_ok=True)
 
     success_count = 0
-    for _, row in tqdm(final_df.iterrows(), total=len(final_df), desc=f"Downloading: "):
+    for row in tqdm(final_rows, desc=f"Downloading '{args.label}' samples", ncols=100):
         if num_sample is not None and success_count >= num_sample:
             break
 
@@ -114,17 +130,15 @@ def main():
         end = row["end_seconds"]
         duration = end - start
         url = f"https://www.youtube.com/watch?v={ytid}"
-        output_path = f"audioset/{target_label}/{target_label}_{success_count}.wav"
+        output_path = f"audioset/{safe_label_folder}/{safe_label_folder}_{success_count}.wav"
         temp_full_wav = "temp_full.wav"
 
-        # 오디오 다운로드 및 WAV 저장
         if not download_audio(url, temp_audio_path):
             continue
 
         if not convert_to_wav(temp_audio_path, temp_full_wav):
             continue
 
-        # 세그먼트 자르기
         try:
             subprocess.run([
                 "ffmpeg", "-y",
