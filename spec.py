@@ -3,7 +3,6 @@ import re
 import argparse
 import wave
 import contextlib
-import numpy as np
 
 def get_duration_samplerate(path):
     try:
@@ -45,15 +44,8 @@ def write_txt(wav_data, output_file):
     with open(output_file, "w", encoding="utf-8") as f:
         for label, entries in wav_data.items():
             entries = sorted(entries, key=lambda x: natural_key(x["path"]))
-
-            durations = [entry["duration"] for entry in entries]
-            mean_dur = np.mean(durations)
-            var_dur = np.var(durations)
-            min_dur = np.min(durations)
-            max_dur = np.max(durations)
-
             for entry in entries:
-                line = f"{entry['path']}\t{label}\t{entry['duration']:.2f}\t{mean_dur:.2f}\t{var_dur:.4f}\t{min_dur:.2f}\t{max_dur:.2f}\t{entry['samplerate']}\n"
+                line = f"{entry['path']}\t{label}\t{entry['duration']:.2f}\t{entry['samplerate']}\n"
                 f.write(line)
 
 def parse_args():
