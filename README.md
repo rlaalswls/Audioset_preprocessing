@@ -26,7 +26,7 @@ Linux: sudo apt-get install ffmpeg
 
 **Install Python libraries**
 ```
-pip install pandas tqdm numpy soundfile scipy
+pip install pandas tqdm numpy soundfile scipy torchaudio
 ```
 
 ## Instruction
