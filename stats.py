@@ -2,6 +2,8 @@ import os
 import argparse
 import wave
 import contextlib
+import numpy as np
+from collections import defaultdict
 
 def get_duration(filepath):
     try:
@@ -14,21 +16,29 @@ def get_duration(filepath):
         return None
 
 def scan_directory(directory):
-    durations = []
+    label_durations = defaultdict(list)
+
     for root, _, files in os.walk(directory):
+        label = os.path.basename(root)
         for file in files:
             if file.endswith(".wav"):
                 filepath = os.path.join(root, file)
                 duration = get_duration(filepath)
                 if duration is not None:
-                    durations.append(duration)
-                    print(f"{filepath}: {duration:.2f} sec")
-                else:
-                    print(f"{filepath}: Unable to read")
+                    label_durations[label].append(duration)
 
-    if durations:
-        avg = sum(durations) / len(durations)
-        print(f"Average duration: {avg:.2f} sec")
+    for label, durations in label_durations.items():
+        durations_np = np.array(durations)
+        avg = np.mean(durations_np)
+        var = np.var(durations_np)
+        min_d = np.min(durations_np)
+        max_d = np.max(durations_np)
+        print(f"Label: {label}")
+        print(f"  Count      : {len(durations)}")
+        print(f"  Avg length : {avg:.2f}")
+        print(f"  Variance   : {var:.2f}")
+        print(f"  Min length : {min_d:.2f}")
+        print(f"  Max length : {max_d:.2f}\n")
 
 def parse_args():
     parser = argparse.ArgumentParser()
