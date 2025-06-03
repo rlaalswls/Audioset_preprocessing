@@ -7,7 +7,7 @@ import numpy as np
 from scipy.fft import rfft, rfftfreq
 
 # 사용할 표준 샘플레이트
-STANDARD_SRS = [8000, 16000, 22050, 32000, 44100, 48000]
+STANDARD_SRS = [8000, 12000, 16000, 22050, 32000, 44100, 48000]
 
 def estimate_max_freq(waveform, sr):
     y = waveform.numpy().squeeze()
@@ -36,15 +36,12 @@ def resample_and_save(input_path, output_path):
         resampled_waveform = resampler(waveform)
         torchaudio.save(output_path, resampled_waveform, target_sr)
 
-    print(f"{os.path.basename(input_path)}: f_max = {max_freq:.1f} Hz → {target_sr} Hz")
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--folder", type=str, required=True)
     parser.add_argument("--num_sample", type=str, default="all")
     args = parser.parse_args()
 
-    # 샘플 수 처리
     if args.num_sample.lower() == "all":
         num_sample = None
     else:
@@ -53,7 +50,6 @@ def main():
         except ValueError:
             sys.exit(1)
 
-    # wav 파일 리스트
     wav_files = sorted([
         f for f in os.listdir(args.folder)
         if f.endswith(".wav") and not f.endswith("_resampled.wav")
