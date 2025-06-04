@@ -65,7 +65,7 @@ python spec.py --folder audioset --txt output_info.txt
 
 ### 4. resampling.py
 
-- 오디오 파일의 FFT 주파수 분석을 통해 주파수 대역을 확인하고, 최적의 샘플레이트로 리샘플링합니다.
+- 오디오 파일의 FFT 주파수 분석을 통해 최대 주파수 대역을 확인하고, 최적의 샘플레이트로 리샘플링합니다.
 - 결과 파일은 _resampled.wav로 저장됩니다.
 
 **How to use:**
@@ -88,7 +88,7 @@ python resampling.py --folder audioset/Explosion --num_sample all
 ├── eval_segments.csv
 ├── unbalanced_train_segments.csv
 ├── extractor.py
-├── duration.py
+├── stats.py
 ├── spec.py
 ├── resampling.py
 ├── requirements.txt
