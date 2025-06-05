@@ -6,23 +6,27 @@ import numpy as np
 import torch
 from scipy.fft import rfftfreq
 
-# 사용할 표준 샘플레이트
 STANDARD_SRS = [8000, 12000, 16000, 22050, 32000, 44100, 48000]
 
 def estimate_max_freq(waveform, sr, n_fft=2048, hop_length=None):
     if hop_length is None:
         hop_length = n_fft // 4
 
+    # Hann 윈도우 생성
+    device = waveform.device
+    window = torch.hann_window(n_fft, device=device)
+
     # STFT 수행: shape = (channel, freq_bins, time_steps)
     stft = torch.stft(
-        waveform, 
-        n_fft=n_fft, 
-        hop_length=hop_length, 
+        waveform,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        window=window,
         return_complex=True
     )
 
     # 진폭 스펙트럼 계산
-    magnitude = stft.abs().squeeze(0).numpy()  # shape = (freq_bins, time_steps)
+    magnitude = stft.abs().squeeze(0).cpu().numpy()  # shape = (freq_bins, time_steps)
     max_bin_indices = np.argmax(magnitude, axis=0)
     max_bin = max(max_bin_indices)
     freqs = rfftfreq(n_fft, 1 / sr)
@@ -81,7 +85,6 @@ def main():
     if any(f.endswith(".wav") for f in os.listdir(root_folder)):
         process_label_folder(root_folder, num_sample)
     else:
-        # 하위 폴더 각각 처리
         for label_name in sorted(os.listdir(root_folder)):
             label_folder = os.path.join(root_folder, label_name)
             if os.path.isdir(label_folder):
