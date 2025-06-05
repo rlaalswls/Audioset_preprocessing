@@ -58,24 +58,14 @@ def main():
     label_csv = "class_labels_indices.csv"
     segment_files = ["eval_segments.csv", "unbalanced_train_segments.csv"]
 
-    if not os.path.exists(label_csv):
-        print(f"Label CSV file not found: {label_csv}")
-        return
-
     df_labels = pd.read_csv(label_csv)
     labelname_to_mid = {slugify(name): mid for mid, name in zip(df_labels["mid"], df_labels["display_name"])}
-
-    if input_label_name not in labelname_to_mid:
-        for k in list(labelname_to_mid.keys())[:20]:
-            print(f"  - {k}")
-        return
 
     target_label_id = labelname_to_mid[input_label_name]
 
     parsed_rows = []
     for data_file in segment_files:
         if not os.path.exists(data_file):
-            print(f"Data file not found: {data_file}")
             continue
 
         with open(data_file, "r", encoding="utf-8") as f:
@@ -108,7 +98,7 @@ def main():
     if not parsed_rows:
         return
 
-    final_rows = parsed_rows if num_sample is None else parsed_rows[:num_sample * 2]
+    final_rows = parsed_rows if num_sample is None else parsed_rows
 
     os.makedirs("audioset", exist_ok=True)
     label_prefix = args.label.replace(" ", "_")
