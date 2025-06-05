@@ -1,7 +1,7 @@
 import os
 import subprocess
 import argparse
-import pandas as pd
+import json
 from tqdm import tqdm
 
 def slugify(name):
@@ -55,11 +55,13 @@ def main():
     input_label_name = slugify(args.label)
     num_sample = args.num_sample
     temp_audio_path = "temp_audio.m4a"
-    label_csv = "class_labels_indices.csv"
-    segment_files = ["eval_segments.csv", "unbalanced_train_segments.csv"]
+    label_json = "./audioset2/ontology.json" 
+    segment_files = ["unbalanced_train_segments.csv", "eval_segments.csv"]
 
-    df_labels = pd.read_csv(label_csv)
-    labelname_to_mid = {slugify(name): mid for mid, name in zip(df_labels["mid"], df_labels["display_name"])}
+    # JSON 파일 읽기 및 label name → id 매핑
+    with open(label_json, "r", encoding="utf-8") as f:
+        ontology = json.load(f)
+    labelname_to_mid = {slugify(item["name"]): item["id"] for item in ontology}
 
     target_label_id = labelname_to_mid[input_label_name]
 
@@ -94,9 +96,6 @@ def main():
                         "end_seconds": end,
                         "label_id": target_label_id
                     })
-
-    if not parsed_rows:
-        return
 
     final_rows = parsed_rows
 
@@ -143,7 +142,7 @@ def main():
     if os.path.exists(temp_full_wav):
         os.remove(temp_full_wav)
 
-    print(f"\n다운로드 누락: {fail_count}개")
+    print(f"누락 : {fail_count}개")
 
 if __name__ == "__main__":
     main()
