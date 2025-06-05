@@ -98,7 +98,7 @@ def main():
     if not parsed_rows:
         return
 
-    final_rows = parsed_rows if num_sample is None else parsed_rows
+    final_rows = parsed_rows
 
     os.makedirs("audioset", exist_ok=True)
     label_prefix = args.label.replace(" ", "_")
